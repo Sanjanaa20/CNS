@@ -1,0 +1,204 @@
+Ceaser Cipher:
+
+import java.util.Scanner;
+public class CaesarCipherMain {
+  public static final String alph = "abcdefghijklmnopqrstuvwxyz";
+  // static because all other functions are static, and we can't reference from
+  // non-static
+  public static String encoding(String plainT, int shift) {
+    plainT = plainT.toLowerCase();
+    // converting the text to lowercase
+    String cipherT = "";
+    // initializing empty string to add alphabets iteratively
+    for (int i = 0; i < plainT.length(); i++) {
+      int mappingV = alph.indexOf(plainT.charAt(i));
+      // value of each alphabet in integers like for A=0, B=1 ...
+      int enVal = (shift + mappingV) % 26;
+
+      char Val = alph.charAt(enVal); // the character to be replaced
+      cipherT = cipherT + Val; // adding to ciphertext
+    }
+    return cipherT;
+  }
+  // following same algorithm but in reverse way, plaintext becomes
+  // ciphertext and vice versa
+  public static String decoding(String cipherT, int shift) {
+    cipherT = cipherT.toLowerCase();
+    // converting the text to lowercase
+    String plainT = "";
+    // initializing empty string to add alphabets iteratively
+    for (int i = 0; i < cipherT.length(); i++) {
+      int mappingV = alph.indexOf(cipherT.charAt(i));
+      int deVal = (mappingV - shift) % 26;
+      if (deVal < 0) // to handle the negative values
+      {
+        deVal = alph.length() + deVal;
+      }
+      char Val = alph.charAt(deVal); // the character to be replaced
+      plainT = plainT + Val; // adding to plaintext
+    }
+    return plainT;
+  }
+  public static void main(String[] args) {
+    Scanner scan = new Scanner(System.in);
+    System.out.println("Enter the text message to be encrypted ");
+    String msg = new String();
+    msg = scan.next();
+    System.out.println(" Encrypted Text : " + encoding(msg, 4));
+    System.out.print(" Decryptd Text : ");
+    System.out.print(decoding(encoding(msg, 4), 4));
+    scan.close();
+  }
+} 
+
+playfair:
+
+import java.awt.Point;
+class playfairCipher {
+  private static char[][] charTable;
+  private static Point[] positions;
+  private static String prepareText(String s, boolean chgJtoI) {
+    s = s.toUpperCase().replaceAll("[^A-Z]", "");
+    return chgJtoI ? s.replace("J", "I") : s.replace("Q", "");
+  }
+  private static void createTbl(String key, boolean chgJtoI) {
+    charTable = new char[5][5];
+    positions = new Point[26];
+    String s = prepareText(key + "ABCDEFGHIJKLMNOPQRSTUVWXYZ", chgJtoI);
+    int len = s.length();
+    for (int i = 0, k = 0; i < len; i++) {
+      char c = s.charAt(i);
+      if (positions[c - 'A'] == null) {
+        charTable[k / 5][k % 5] = c;
+        positions[c - 'A'] = new Point(k % 5, k / 5);
+        k++;
+      }
+    }
+  }
+  private static String codec(StringBuilder txt, int dir) {
+    int len = txt.length();
+    for (int i = 0; i < len; i += 2) {
+      char a = txt.charAt(i);
+      char b = txt.charAt(i + 1);
+      int row1 = positions[a - 'A'].y;
+      int row2 = positions[b - 'A'].y;
+      int col1 = positions[a - 'A'].x;
+      int col2 = positions[b - 'A'].x;
+      if (row1 == row2) {
+        col1 = (col1 + dir) % 5;
+        col2 = (col2 + dir) % 5;
+      } else if (col1 == col2) {
+        row1 = (row1 + dir) % 5;
+        row2 = (row2 + dir) % 5;
+      } else {
+        int tmp = col1;
+        col1 = col2;
+        col2 = tmp;
+      }
+      txt.setCharAt(i, charTable[row1][col1]);
+      txt.setCharAt(i + 1, charTable[row2][col2]);
+    }
+    return txt.toString();
+  }
+
+  private static String encode(String s) {
+    StringBuilder sb = new StringBuilder(s);
+    for (int i = 0; i < sb.length(); i += 2) {
+      if (i == sb.length() - 1) {
+        sb.append(sb.length() % 2 == 1 ? 'X' : "");
+      } else if (sb.charAt(i) == sb.charAt(i + 1)) {
+        sb.insert(i + 1, 'X');
+      }
+    }
+    return codec(sb, 1);
+  }
+  private static String decode(String s) {
+    return codec(new StringBuilder(s), 4);
+  }
+  public static void main(String[] args) throws java.lang.Exception {
+    String key = "CSE";
+    String txt = "Security Lab"; /* make sure string length is even */ /* change
+    J to I */
+    boolean chgJtoI = true;
+    createTbl(key, chgJtoI);
+    String enc = encode(prepareText(txt, chgJtoI));
+    System.out.println("Simulating Playfair Cipher\n ---------------------");
+    System.out.println("Input Message : " + txt);
+    System.out.println("Encrypted Message : " + enc);
+    System.out.println("Decrypted Message : " + decode(enc));
+  }
+} 
+
+HillCipher.java
+
+class hillCipher {
+  /* 3x3 key matrix for 3 characters at once */
+  public static int[][] keymat =
+      new int[][] {{1, 2, 1}, {2, 3, 2}, {2, 2, 1}}; /* key inverse matrix */
+  public static int[][] invkeymat =
+      new int[][] {{-1, 0, 1}, {2, -1, 0}, {-2, 2, -1}};
+  public static String key = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  private static String encode(char a, char b, char c) {
+    String ret = "";
+    int x, y, z;
+    int posa = (int) a - 65;
+    int posb = (int) b - 65;
+    int posc = (int) c - 65;
+    x = posa * keymat[0][0] + posb * keymat[1][0] + posc * keymat[2][0];
+    y = posa * keymat[0][1] + posb * keymat[1][1] + posc * keymat[2][1];
+    z = posa * keymat[0][2] + posb * keymat[1][2] + posc * keymat[2][2];
+    a = key.charAt(x % 26);
+    b = key.charAt(y % 26);
+    c = key.charAt(z % 26);
+    ret = "" + a + b + c;
+    return ret;
+  }
+  private static String decode(char a, char b, char c) {
+    String ret = "";
+    int x, y, z;
+    int posa = (int) a - 65;
+    int posb = (int) b - 65;
+    int posc = (int) c - 65;
+    x = posa * invkeymat[0][0] + posb * invkeymat[1][0]
+        + posc * invkeymat[2][0];
+    y = posa * invkeymat[0][1] + posb * invkeymat[1][1]
+        + posc * invkeymat[2][1];
+    z = posa * invkeymat[0][2] + posb * invkeymat[1][2]
+        + posc * invkeymat[2][2];
+    a = key.charAt((x % 26 < 0) ? (26 + x % 26) : (x % 26));
+    b = key.charAt((y % 26 < 0) ? (26 + y % 26) : (y % 26));
+    c = key.charAt((z % 26 < 0) ? (26 + z % 26) : (z % 26));
+    ret = "" + a + b + c;
+    return ret;
+  }
+  public static void main(String[] args) throws java.lang.Exception {
+    String msg;
+    String enc = "";
+    String dec = "";
+    int n;
+    msg = ("SecurityLaboratory");
+    System.out.println("simulation of Hill Cipher\n ------------------------");
+    System.out.println("Input message : " + msg);
+    msg = msg.toUpperCase();
+    msg = msg.replaceAll("\\s", "");
+    /* remove spaces */ n = msg.length() % 3;
+
+    /* append padding text X */ if (n != 0) {
+      for (int i = 1; i <= (3 - n); i++) {
+        msg += 'X';
+      }
+    }
+    System.out.println("padded message : " + msg);
+    char[] pdchars = msg.toCharArray();
+    for (int i = 0; i < msg.length(); i += 3) {
+      enc += encode(pdchars[i], pdchars[i + 1], pdchars[i + 2]);
+    }
+    System.out.println("encoded message : " + enc);
+    char[] dechars = enc.toCharArray();
+    for (int i = 0; i < enc.length(); i += 3) {
+      dec += decode(dechars[i], dechars[i + 1], dechars[i + 2]);
+    }
+    System.out.println("decoded message : " + dec);
+  }
+}
+
